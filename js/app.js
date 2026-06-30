@@ -71,6 +71,9 @@ async function getGitHubUser(username) {
         // User Profile API
         // -----------------------
         const userResponse = await fetch(`https://api.github.com/users/${username}`);
+        if (userResponse.status === 403) {
+            throw new Error("GitHub API rate limit exceeded. Please wait a bit and try again.");
+        }
         if (!userResponse.ok) {
             throw new Error("User not found");
         }
@@ -79,8 +82,14 @@ async function getGitHubUser(username) {
         // -----------------------
         // User Repositories API
         // -----------------------
-        const repoResponse = await fetch(`https://api.github.com/users/${username}/repos`);
+        const repoResponse = await fetch(`https://api.github.com/users/${username}/repos?per_page=100`);
+        if (repoResponse.status === 403) {
+            throw new Error("GitHub API rate limit exceeded. Please wait a bit and try again.");
+        }
         const repos = await repoResponse.json();
+        if (!Array.isArray(repos)) {
+            throw new Error("Could not load repositories for this user.");
+        }
 
         // Hide loader
         loader.style.display = "none";
